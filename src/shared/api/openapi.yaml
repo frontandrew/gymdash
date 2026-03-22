@@ -1,0 +1,1409 @@
+openapi: 3.0.3
+info:
+  title: MG-Cup API
+  description: |
+    API для интеграции с системой мотоджимханы MG-Cup.
+    Предоставляет доступ к данным о чемпионатах, этапах, спортсменах и базовых фигурах.
+
+    Все запросы требуют передачи API-ключа в параметре `signature`.
+    По вопросам расширения функционала: gymkhana.cup@gmail.com
+  version: 1.0.0
+  contact:
+    email: gymkhana.cup@gmail.com
+
+servers:
+  - url: https://api.mg-cup.ru
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: signature
+      description: API-ключ для авторизации запросов
+
+  schemas:
+    ChampionshipType:
+      type: string
+      enum: [online, offline, gp]
+      description: Тип чемпионата
+
+    AthleteClass:
+      type: string
+      enum: [A, B, C1, C2, C3, D1, D2, D3, D4, N]
+      description: Класс спортсмена/этапа
+
+    StageStatusGpOnline:
+      type: string
+      enum:
+        - Предстоящий этап
+        - Приём результатов
+        - Подведение итогов
+        - Прошедший этап
+        - Этап отменён
+      description: Статус этапа (GP и Online)
+
+    StageStatusOffline:
+      type: string
+      enum:
+        - Предстоящий этап
+        - Открыта регистрация на этап
+        - Завершена регистрация на этап
+        - Текущий этап
+        - Подведение итогов
+        - Прошедший этап
+        - Этап отменён
+      description: Статус этапа (Offline)
+
+    ChampionshipListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID чемпионата
+          example: 18
+        title:
+          type: string
+          description: Название чемпионата
+          example: Triangle gp
+        year:
+          description: Год проведения чемпионата
+          oneOf:
+            - type: string
+            - type: integer
+          example: "2021"
+        description:
+          type: string
+          description: Описание чемпионата (HTML)
+          example: "<p>Описание чемпионата</p>"
+        stagesCount:
+          type: integer
+          description: Количество этапов
+          example: 7
+        type:
+          $ref: '#/components/schemas/ChampionshipType'
+
+    StageGpSummary:
+      type: object
+      description: Краткая информация об этапе GP
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        status:
+          $ref: '#/components/schemas/StageStatusGpOnline'
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество активных участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Ссылка на фото трассы
+        dateStart:
+          type: integer
+          format: int64
+          description: Дата начала этапа (unixtime)
+        dateEnd:
+          type: integer
+          format: int64
+          description: Дата завершения этапа (unixtime)
+        referenceTimeSeconds:
+          type: integer
+          description: Эталонное время (миллисекунды)
+        referenceTime:
+          type: string
+          description: Эталонное время (мин:сек.мсек)
+          example: "1:30.000"
+        bestTimeSeconds:
+          type: integer
+          description: Лучшее время (миллисекунды)
+        bestTime:
+          type: string
+          description: Лучшее время (мин:сек.мсек)
+        bestUserId:
+          type: integer
+          description: ID спортсмена с лучшим результатом
+        bestUserFirstName:
+          type: string
+          description: Имя спортсмена с лучшим результатом
+        bestUserLastname:
+          type: string
+          description: Фамилия спортсмена с лучшим результатом
+        bestUserFullName:
+          type: string
+          description: Полное имя спортсмена с лучшим результатом
+        bestUserCity:
+          type: string
+          description: Город спортсмена с лучшим результатом
+
+    StageSummaryOffline:
+      type: object
+      description: Краткая информация об оффлайн-этапе
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        status:
+          $ref: '#/components/schemas/StageStatusOffline'
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Фото трассы
+        city:
+          type: string
+          description: Город проведения этапа
+        dateOfThe:
+          type: integer
+          format: int64
+          description: Дата этапа (unixtime)
+        referenceTimeSeconds:
+          type: integer
+          description: Эталонное время (миллисекунды)
+        referenceTime:
+          type: string
+          description: Эталонное время (мин:сек.мсек)
+        bestTimeSeconds:
+          type: integer
+          description: Лучшее время (миллисекунды)
+        bestTime:
+          type: string
+          description: Лучшее время (мин:сек.мсек)
+        bestUserId:
+          type: integer
+          description: ID спортсмена с лучшим временем
+        bestUserFirstName:
+          type: string
+          description: Имя спортсмена с лучшим временем
+        bestUserLastname:
+          type: string
+          description: Фамилия спортсмена с лучшим временем
+        bestUserFullName:
+          type: string
+          description: Полное имя спортсмена с лучшим временем
+        bestUserCity:
+          type: string
+          description: Город спортсмена с лучшим временем
+
+    StageSummaryOnline:
+      type: object
+      description: Краткая информация об онлайн-этапе
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Ссылка на фото трассы
+        dateStart:
+          type: integer
+          format: int64
+          description: Дата начала этапа (unixtime)
+        dateEnd:
+          type: integer
+          format: int64
+          description: Дата завершения этапа (unixtime)
+        bestTimeSeconds:
+          type: integer
+          description: Лучшее время (миллисекунды)
+        bestTime:
+          type: string
+          description: Лучшее время (мин:сек.мсек)
+        bestUserId:
+          type: integer
+          description: ID спортсмена с лучшим результатом
+        bestUserFirstName:
+          type: string
+          description: Имя спортсмена с лучшим результатом
+        bestUserLastname:
+          type: string
+          description: Фамилия спортсмена с лучшим результатом
+        bestUserFullName:
+          type: string
+          description: Полное имя спортсмена с лучшим результатом
+        bestUserCity:
+          type: string
+          description: Город спортсмена с лучшим результатом
+
+    ChampionshipGp:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID чемпионата
+        title:
+          type: string
+          description: Название чемпионата
+        year:
+          type: integer
+          description: Год проведения чемпионата
+        description:
+          type: string
+          description: Описание чемпионата (HTML)
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageGpSummary'
+
+    ChampionshipOffline:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID чемпионата
+        title:
+          type: string
+          description: Название чемпионата
+        year:
+          type: integer
+          description: Год проведения чемпионата
+        description:
+          type: string
+          description: Описание чемпионата (HTML)
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageSummaryOffline'
+
+    ChampionshipOnline:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID чемпионата
+        title:
+          type: string
+          description: Название чемпионата
+        year:
+          type: string
+          description: Год проведения чемпионата
+        description:
+          type: string
+          description: Описание чемпионата (HTML)
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageSummaryOnline'
+
+    ChampionshipResultStage:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        title:
+          type: string
+          description: Название этапа
+        points:
+          type: integer
+          description: Количество баллов за этап
+
+    ChampionshipResultItem:
+      type: object
+      properties:
+        place:
+          type: integer
+          description: Место в чемпионате
+        userId:
+          type: integer
+          description: ID пользователя
+        userFullName:
+          type: string
+          description: Полное имя спортсмена
+        userFirstName:
+          type: string
+          description: Имя спортсмена
+        userLastName:
+          type: string
+          description: Фамилия спортсмена
+        userCity:
+          type: string
+          description: Город спортсмена
+        userClass:
+          type: string
+          description: Класс спортсмена
+        points:
+          type: integer
+          description: Суммарное количество баллов
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChampionshipResultStage'
+
+    AttemptResult:
+      type: object
+      properties:
+        timeSeconds:
+          type: integer
+          description: Время без штрафа (миллисекунды)
+        time:
+          type: string
+          description: Время без штрафа (мин:сек.мсек)
+        fine:
+          type: integer
+          description: Штраф
+        resultTimeSeconds:
+          type: integer
+          description: Итоговое время со штрафом (миллисекунды)
+        resultTime:
+          type: string
+          description: Итоговое время со штрафом (мин:сек.мсек)
+        attempt:
+          type: integer
+          description: Номер попытки
+        isFail:
+          type: boolean
+          description: Зачёт или нет (false = зачёт)
+        video:
+          type: string
+          format: uri
+          description: Ссылка на видео заезда
+
+    OfflineStageResultItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID спортсмена
+        userFullName:
+          type: string
+          description: Полное имя спортсмена
+        userLastName:
+          type: string
+          description: Фамилия спортсмена
+        userFirstName:
+          type: string
+          description: Имя спортсмена
+        userCity:
+          type: string
+          description: Город спортсмена
+        userCountry:
+          type: string
+          description: Страна спортсмена
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        athleteClass:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс спортсмена на момент участия
+        placeInAthleteClass:
+          type: integer
+          description: Место в классе A-N
+        champClass:
+          type: string
+          description: Класс награждения
+        placeInChampClass:
+          type: integer
+          description: Место в классе награждения
+        attemtps:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttemptResult'
+        bestTimeSeconds:
+          type: integer
+          description: Лучшее итоговое время (миллисекунды)
+        bestTime:
+          type: string
+          description: Лучшее итоговое время (мин:сек.мсек)
+        percent:
+          type: number
+          format: float
+          description: Процент отставания от эталонного времени
+        newClass:
+          type: string
+          nullable: true
+          description: Новый класс спортсмена. null если класс не изменился
+
+    GpPreviousResult:
+      type: object
+      properties:
+        date:
+          type: integer
+          format: int64
+          description: Дата результата (unixtime)
+        timeSeconds:
+          type: integer
+          description: Время без штрафа (миллисекунды)
+        time:
+          type: string
+          description: Время без штрафа (мин:сек.мсек)
+        fine:
+          type: integer
+          description: Штраф
+        resultTimeSeconds:
+          type: integer
+          description: Итоговое время со штрафом (миллисекунды)
+        resultTime:
+          type: string
+          description: Итоговое время со штрафом (мин:сек.мсек)
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс на момент отправки результата
+        video:
+          type: string
+          format: uri
+          description: Ссылка на видео
+
+    GpStageResultItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID спортсмена
+        userFullName:
+          type: string
+          description: Полное имя спортсмена
+        userLastName:
+          type: string
+          description: Фамилия спортсмена
+        userFirstName:
+          type: string
+          description: Имя спортсмена
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        userCity:
+          type: string
+          description: Город спортсмена
+        userCountry:
+          type: string
+          description: Страна спортсмена
+        athleteClass:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс спортсмена на момент отправки результата
+        date:
+          type: integer
+          format: int64
+          description: Дата заезда (unixtime)
+        place:
+          type: integer
+          description: Место в этапе
+        previous:
+          type: array
+          items:
+            $ref: '#/components/schemas/GpPreviousResult'
+          description: Предыдущие результаты
+        timeSeconds:
+          type: integer
+          description: Время лучшей попытки без штрафа (миллисекунды)
+        time:
+          type: string
+          description: Время лучшей попытки без штрафа (мин:сек.мсек)
+        fine:
+          type: integer
+          description: Штраф лучшей попытки
+        resultTimeSeconds:
+          type: integer
+          description: Итоговое время лучшей попытки (миллисекунды)
+        resultTime:
+          type: string
+          description: Итоговое время лучшей попытки (мин:сек.мсек)
+        percent:
+          type: number
+          format: float
+          description: Процент отставания от эталона
+        newClass:
+          type: string
+          nullable: true
+          description: Новый класс. null если класс не повышен
+        points:
+          type: integer
+          description: Количество баллов
+        video:
+          type: string
+          format: uri
+          description: Видео лучшей попытки
+        version:
+          type: integer
+          description: Номер попытки, попавшей в зачёт
+
+    OnlineStageResultItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID спортсмена
+        userFullName:
+          type: string
+          description: Полное имя спортсмена
+        userLastName:
+          type: string
+          description: Фамилия спортсмена
+        userFirstName:
+          type: string
+          description: Имя спортсмена
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        userCity:
+          type: string
+          description: Город спортсмена
+        userCountry:
+          type: string
+          description: Страна спортсмена
+        athleteClass:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс спортсмена
+        date:
+          type: integer
+          format: int64
+          description: Дата отправки результата (unixtime)
+        timeSeconds:
+          type: integer
+          description: Время без штрафа (миллисекунды)
+        time:
+          type: string
+          description: Время без штрафа (мин:сек.мсек)
+        fine:
+          type: integer
+          description: Штраф
+        resultTimeSeconds:
+          type: integer
+          description: Итоговое время со штрафом (миллисекунды)
+        resultTime:
+          type: string
+          description: Итоговое время со штрафом (мин:сек.мсек)
+        percent:
+          type: number
+          format: float
+          description: Рейтинг
+        video:
+          type: string
+          format: uri
+          description: Ссылка на видео
+
+    StageOffline:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        champId:
+          type: integer
+          description: ID чемпионата
+        classes:
+          type: array
+          items:
+            type: string
+          description: Классы награждения
+        champTitle:
+          type: string
+          description: Название чемпионата
+        status:
+          $ref: '#/components/schemas/StageStatusGpOnline'
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Трасса этапа
+        city:
+          type: string
+          description: Город проведения
+        dateOfThe:
+          type: integer
+          format: int64
+          description: Дата проведения (unixtime)
+        referenceTimeSeconds:
+          type: integer
+          description: Эталонное время (миллисекунды)
+        referenceTime:
+          type: string
+          description: Эталонное время (мин:сек.мсек)
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfflineStageResultItem'
+
+    StageGp:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        champId:
+          type: integer
+          description: ID чемпионата
+        champTitle:
+          type: string
+          description: Название чемпионата
+        status:
+          $ref: '#/components/schemas/StageStatusGpOnline'
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Ссылка на фото трассы
+        dateStart:
+          type: integer
+          format: int64
+          description: Дата начала этапа (unixtime)
+        dateEnd:
+          type: integer
+          format: int64
+          description: Дата завершения этапа (unixtime)
+        referenceTimeSeconds:
+          type: integer
+          description: Эталонное время (миллисекунды)
+        referenceTime:
+          type: string
+          description: Эталонное время (мин:сек.мсек)
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GpStageResultItem'
+
+    StageOnline:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID этапа
+        title:
+          type: string
+          description: Название этапа
+        description:
+          type: string
+          description: Описание этапа (HTML)
+        usersCount:
+          type: integer
+          description: Количество участников
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        trackUrl:
+          type: string
+          format: uri
+          description: Фото трассы
+        dateStart:
+          type: integer
+          format: int64
+          description: Дата начала этапа (unixtime)
+        dateEnd:
+          type: integer
+          format: int64
+          description: Дата завершения этапа (unixtime)
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnlineStageResultItem'
+
+    FigureListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID фигуры
+        title:
+          type: string
+          description: Название фигуры
+        description:
+          type: string
+          description: Описание фигуры (HTML)
+        usersCount:
+          type: integer
+          description: Количество результатов
+        bestTimeSeconds:
+          type: integer
+          description: Лучшее время (миллисекунды)
+        bestTime:
+          type: string
+          description: Лучшее время (мин:сек.мсек)
+        bestTimeInRussiaSeconds:
+          type: integer
+          description: Лучшее время в России (миллисекунды)
+        bestTimeInRussia:
+          type: string
+          description: Лучшее время в России (мин:сек.мсек)
+        track:
+          type: string
+          description: Фото трассы
+        withIncClass:
+          type: boolean
+          description: Производится ли повышение класса по фигуре
+
+    FigureTimeResult:
+      type: object
+      properties:
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс спортсмена на момент отправки результата
+        date:
+          type: integer
+          format: int64
+          description: Дата заезда (unixtime)
+        timeSeconds:
+          type: integer
+          description: Время без штрафа (миллисекунды)
+        time:
+          type: string
+          description: Время без штрафа (мин:сек.мсек)
+        fine:
+          type: integer
+          description: Штраф
+        resultTimeSeconds:
+          type: integer
+          description: Итоговое время со штрафом (миллисекунды)
+        resultTime:
+          type: string
+          description: Итоговое время со штрафом (мин:сек.мсек)
+        percent:
+          type: number
+          format: float
+          description: Рейтинг
+        newClass:
+          type: string
+          nullable: true
+          description: Новый класс. null если класс не повышен
+        video:
+          type: string
+          format: uri
+          description: Ссылка на видео
+
+    FigureResultItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID спортсмена
+        userFullName:
+          type: string
+          description: Полное имя спортсмена
+        userLastName:
+          type: string
+          description: Фамилия спортсмена
+        userFirstName:
+          type: string
+          description: Имя спортсмена
+        userCity:
+          type: string
+          description: Город спортсмена
+        userCountry:
+          type: string
+          description: Страна спортсмена
+        all:
+          type: array
+          items:
+            $ref: '#/components/schemas/FigureTimeResult'
+          description: Все результаты спортсмена по этой фигуре
+        best:
+          $ref: '#/components/schemas/FigureTimeResult'
+          description: Лучший результат спортсмена по фигуре
+
+    Figure:
+      allOf:
+        - $ref: '#/components/schemas/FigureListItem'
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/FigureResultItem'
+
+    UserListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID спортсмена
+        fullName:
+          type: string
+          description: Полное имя спортсмена
+        firstName:
+          type: string
+          description: Имя спортсмена
+        lastName:
+          type: string
+          description: Фамилия спортсмена
+        city:
+          type: string
+          description: Город спортсмена
+        country:
+          type: string
+          description: Страна спортсмена
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        motorcycles:
+          type: array
+          items:
+            type: string
+          description: Список мотоциклов
+        imgUrl:
+          type: string
+          description: Фото спортсмена
+        number:
+          type: integer
+          nullable: true
+          description: Номер спортсмена
+
+    UserList:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Всего найдено результатов
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserListItem'
+
+    UserFigureData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID фигуры
+        title:
+          type: string
+          description: Название фигуры
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        date:
+          type: integer
+          format: int64
+          description: Дата результата (unixtime)
+        percent:
+          type: number
+          format: float
+          description: Рейтинг
+        link:
+          type: string
+          description: Ссылка на видео
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+          description: Класс на момент отправки
+        newClass:
+          type: string
+          nullable: true
+          description: Новый класс (null если перехода не было)
+
+    UserStageData:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ChampionshipType'
+          description: Тип этапа
+        id:
+          type: integer
+          description: ID этапа
+        title:
+          type: string
+          description: Название этапа
+        motorcycle:
+          type: string
+          description: Мотоцикл
+        date:
+          type: integer
+          format: int64
+          description: Дата результата (unixtime)
+        place:
+          type: integer
+          description: Место в этапе
+        percent:
+          type: number
+          format: float
+          description: Рейтинг
+        city:
+          type: string
+          description: Город проведения этапа
+        link:
+          type: string
+          format: uri
+          description: Ссылка на видео
+
+    UserClassHistory:
+      type: object
+      properties:
+        old:
+          type: string
+          description: Старый класс
+        new:
+          type: string
+          description: Новый класс
+        date:
+          type: integer
+          format: int64
+          description: Дата изменения класса (unixtime)
+        event:
+          type: string
+          description: Событие, вызвавшее изменение класса
+
+    User:
+      type: object
+      properties:
+        fullName:
+          type: string
+          description: Полное имя спортсмена
+        firstName:
+          type: string
+          description: Имя спортсмена
+        lastName:
+          type: string
+          description: Фамилия спортсмена
+        city:
+          type: string
+          description: Город спортсмена
+        country:
+          type: string
+          description: Страна спортсмена
+        class:
+          $ref: '#/components/schemas/AthleteClass'
+        motorcycles:
+          type: array
+          items:
+            type: string
+          description: Список мотоциклов
+        imgUrl:
+          type: string
+          description: Фото спортсмена
+        number:
+          type: integer
+          nullable: true
+          description: Номер спортсмена
+        figuresData:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFigureData'
+          description: Данные о фигурах
+        stagesData:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserStageData'
+          description: Информация об этапах
+        classesHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserClassHistory'
+          description: История переходов между классами
+
+    CalculatorClassBand:
+      type: object
+      properties:
+        class:
+          type: string
+          description: Класс
+        classPercent:
+          type: string
+          description: С какого процента начинается класс
+        startTime:
+          type: string
+          description: Нижняя граница попадания в класс (мин:сек.мсек)
+        endTime:
+          type: string
+          description: Верхняя граница попадания в класс (мин:сек.мсек)
+
+    CalculatorResult:
+      type: object
+      properties:
+        referenceTime:
+          type: string
+          description: Эталонное время (мин:сек.мсек)
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculatorClassBand'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Сообщение об ошибке
+
+  parameters:
+    Signature:
+      name: signature
+      in: query
+      required: true
+      schema:
+        type: string
+      description: API-ключ для авторизации
+
+paths:
+  /championships/list:
+    get:
+      summary: Список чемпионатов
+      description: |
+        Возвращает список чемпионатов, включая gymkhana-gp и онлайн чемпионаты.
+        Если не указаны `fromYear` и `toYear`, возвращаются чемпионаты только за текущий год.
+      operationId: getChampionshipsList
+      tags:
+        - Чемпионаты
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: types
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "online,gp"
+          description: |
+            Фильтр по типу. Возможные значения: `online`, `gp`, `offline`.
+            Для нескольких значений — через запятую.
+            По умолчанию — все типы.
+        - name: fromYear
+          in: query
+          required: false
+          schema:
+            type: integer
+            minLength: 4
+            maxLength: 4
+            example: 2020
+          description: Начиная с какого года. Формат — 4 цифры.
+        - name: toYear
+          in: query
+          required: false
+          schema:
+            type: integer
+            minLength: 4
+            maxLength: 4
+            example: 2022
+          description: До какого года (включительно). Формат — 4 цифры.
+      responses:
+        '200':
+          description: Список чемпионатов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChampionshipListItem'
+              example:
+                - id: 18
+                  title: "Triangle gp"
+                  year: "2021"
+                  description: "<p>Описание чемпионата</p>"
+                  stagesCount: 7
+                  type: "online"
+                - id: 2
+                  title: "Gymkhana GP 2019"
+                  year: 2019
+                  description: "<p>Описание</p>"
+                  stagesCount: 6
+                  type: "gp"
+
+  /championships/get:
+    get:
+      summary: Информация о чемпионате
+      description: |
+        Возвращает детальную информацию о чемпионате, включая список этапов.
+        Формат ответа зависит от типа чемпионата (`gp`, `offline`, `online`).
+      operationId: getChampionship
+      tags:
+        - Чемпионаты
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID чемпионата
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ChampionshipType'
+          description: Тип чемпионата
+      responses:
+        '200':
+          description: Информация о чемпионате
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ChampionshipGp'
+                  - $ref: '#/components/schemas/ChampionshipOffline'
+                  - $ref: '#/components/schemas/ChampionshipOnline'
+                discriminator:
+                  propertyName: type
+
+  /championships/results:
+    get:
+      summary: Итоги чемпионата
+      description: |
+        Возвращает итоговую таблицу чемпионата с местами, баллами и результатами по этапам.
+        Доступно только для типов `offline` и `gp`.
+      operationId: getChampionshipResults
+      tags:
+        - Чемпионаты
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID чемпионата
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [offline, gp]
+          description: Тип чемпионата (только offline или gp)
+      responses:
+        '200':
+          description: Итоги чемпионата
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChampionshipResultItem'
+
+  /stages/get:
+    get:
+      summary: Данные об этапе
+      description: |
+        Возвращает детальные данные об этапе, включая результаты участников.
+        Формат ответа зависит от типа чемпионата.
+      operationId: getStage
+      tags:
+        - Этапы
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID этапа
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ChampionshipType'
+          description: Тип чемпионата
+      responses:
+        '200':
+          description: Данные об этапе
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/StageOffline'
+                  - $ref: '#/components/schemas/StageGp'
+                  - $ref: '#/components/schemas/StageOnline'
+                discriminator:
+                  propertyName: type
+
+  /figures/list:
+    get:
+      summary: Список базовых фигур
+      description: Возвращает список всех базовых фигур с общей статистикой.
+      operationId: getFiguresList
+      tags:
+        - Фигуры
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+      responses:
+        '200':
+          description: Список фигур
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FigureListItem'
+
+  /figures/get:
+    get:
+      summary: Информация о фигуре
+      description: Возвращает детальную информацию о фигуре, включая результаты всех спортсменов.
+      operationId: getFigure
+      tags:
+        - Фигуры
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID фигуры
+      responses:
+        '200':
+          description: Информация о фигуре с результатами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Figure'
+
+  /users/list:
+    get:
+      summary: Список спортсменов
+      description: |
+        Возвращает список спортсменов с пагинацией.
+        Результаты сортируются по классу (от A до N), внутри класса — по фамилии.
+      operationId: getUsersList
+      tags:
+        - Спортсмены
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество записей (макс. 100, по умолчанию 20)
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+        - name: class
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AthleteClass'
+          description: Фильтр по классу спортсмена
+      responses:
+        '200':
+          description: Список спортсменов с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+
+  /users/get:
+    get:
+      summary: Информация о спортсмене
+      description: Возвращает полный профиль спортсмена с историей выступлений, результатами по фигурам и историей классов.
+      operationId: getUser
+      tags:
+        - Спортсмены
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID спортсмена
+      responses:
+        '200':
+          description: Профиль спортсмена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /calculate/get:
+    get:
+      summary: Калькулятор классов
+      description: |
+        Рассчитывает, в какие классы попадает результат спортсмена, исходя из его класса и времени.
+
+        Поддерживаемые форматы времени: `mm:ss.msec`, `mm:ss,msec`, `mm:ss:msec`, `mm:ss`, `mm`.
+        Минуты и секунды не могут превышать 60. Миллисекунды округляются до 3 знаков.
+
+        В качестве класса можно указать ID, буквенное обозначение на русском или английском языке (регистр не важен).
+        Примеры: `D1`, `d1`, `Д1`, `д1`.
+      operationId: calculate
+      tags:
+        - Калькулятор
+      parameters:
+        - $ref: '#/components/parameters/Signature'
+        - name: class
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "D1"
+          description: Класс спортсмена (ID или буквенное обозначение, рус/англ)
+        - name: time
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "01:21.540"
+          description: |
+            Время спортсмена. Форматы: `mm:ss.msec`, `mm:ss,msec`, `mm:ss:msec`, `mm:ss`, `mm`
+      responses:
+        '200':
+          description: Результат расчёта по классам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculatorResult'
+        '400':
+          description: Некорректный формат времени или класса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Чемпионаты
+    description: Операции с чемпионатами
+  - name: Этапы
+    description: Операции с этапами
+  - name: Фигуры
+    description: Базовые фигуры мотоджимханы
+  - name: Спортсмены
+    description: Профили и статистика спортсменов
+  - name: Калькулятор
+    description: Калькулятор классов по времени
